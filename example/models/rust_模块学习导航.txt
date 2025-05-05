@@ -1,0 +1,93 @@
+1.分类
+(1)网络
+    reqwest 请求
+    批量下载:https://helloreader.blog.csdn.net/article/details/136370135
+    tokio 异步
+
+(2)深度学习
+    Burn
+
+(3)辅助python加速函数
+   maturin
+   https://helloreader.blog.csdn.net/article/details/136642898
+
+(4)GUI库
+    Slint
+    https://juejin.cn/post/7301955975337951271
+    Dioxus(需要学习ccs)
+
+(5)键盘鼠标模拟
+    inputbot
+
+(6)数据处理与格式解析
+    csv
+    #读写库
+    serde/serde_json
+    #JSON实现
+
+(7)办公软件
+    excel:
+        rust-xlsx
+        openxlsx
+    word:
+        docx
+
+(8)文件操作
+    Rust-fs(文件系统常用操作)
+
+(9)命令行参数解析库
+    clap
+    #https://github.com/clap-rs/clap/tree/master/examples
+    #https://zhuanlan.zhihu.com/p/676796027
+    clap_complete‌
+    #配合clap生成命令行工具的自动补全脚本(如Bash/Zsh),提升用户交互体验。
+
+(10)错误处理
+    anyhow
+    #https://zhuanlan.zhihu.com/p/689719879
+
+(11)生物信息文件格式解析工具
+    noodles‌ #sam/vcf
+
+(12)并发
+    rayon
+    
+(13) 日志管理
+    ‌log/log4rs‌
+
+(14)生物信息学库
+    ‌rust-htslib bam/cram/vcf格式处理
+    rust-lapper #区间查询优化库,适用于基因坐标区间重叠检测等场景
+
+(15)压缩有解压
+    flate2/bzip2/xz2
+    #分别处理gzip(flate2)、bzip2(bzip2)和LZMA/XZ(xz2)格式的压缩与解压操作
+
+(16)字符串与文本处理
+    regex
+    natord
+    itertools
+
+2.python rust 对标库
+
+    numpy   ndarray
+    pandas  polars
+    pytorch tch-rs/Burn/Candle  (DL)深度学习
+    tensorflow  tensorflow-rust
+    scikit-learn    linfa (ML)机器学习
+    matplotlib    plotters
+
+3.需要学习的功能
+
+#Rust-HashMap
+#https://zhuanlan.zhihu.com/p/676188349
+
+#Rust-fs(文件系统常用操作)
+#https://zhuanlan.zhihu.com/p/676551793
+
+#Rust-执行shell命令
+#https://zhuanlan.zhihu.com/p/684310154
+
+#Rust- pipe command
+#https://zhuanlan.zhihu.com/p/693505504
+#介绍 "ls -all | wc -l" 这种管道命令如何在rust中编程实现
