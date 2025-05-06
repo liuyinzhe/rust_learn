@@ -162,3 +162,19 @@ mod.rs 需要 pub 公有化
 pub mod model
 ```
 
+
+
+## 运行与测试
+
+main入口运行
+
+```bash
+cargo run --bin
+```
+
+指定rs脚本(bin目录的脚本write_lines.rs)
+
+```
+cargo run --bin write_lines
+```
+
