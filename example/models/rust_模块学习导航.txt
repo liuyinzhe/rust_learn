@@ -36,7 +36,7 @@
     Rust-fs(文件系统常用操作)
 
 (9)命令行参数解析库
-    clap
+    clap  done
     #https://github.com/clap-rs/clap/tree/master/examples
     #https://zhuanlan.zhihu.com/p/676796027
     clap_complete‌
@@ -91,3 +91,9 @@
 #Rust- pipe command
 #https://zhuanlan.zhihu.com/p/693505504
 #介绍 "ls -all | wc -l" 这种管道命令如何在rust中编程实现
+
+#【Rust入门教程】按行读取写入大文件  done
+#https://www.bilibili.com/video/BV1La4y117wD
+
+#[演示]Rust自定义错误与thiserror和anyhow
+#https://www.bilibili.com/video/BV195411P7Vb
