@@ -103,3 +103,51 @@ fn main() {
     它通过接管值的所有权(ownership) 并在调用后销毁它，避免商场释放(double free)问题
 
 */
+
+
+/*
+    Rc<T> 引用计数智能指针
+    Reference Counting
+
+    Rc<T> 可以开启多重所有权#遍历修改? 
+    跟踪一个值的引用数量，可以判断该值是否还在使用 # 图结构 节点的多个边
+        如果没有引用了，就可以清理掉了
+
+    Rc<T> 使用场景
+    想在Heap 堆上分配一些数据，供程序的多个部分读取，但编译时无法确定那部分会最后完成对数据的使用
+
+    只可用于单线程场景;分享数据
+*/
+
+// enum List {
+//     Cons(i32, Box<List>), // 包含自身类型
+//     Nil,
+// }
+/*
+    BOX<T>
+    数据存储在Heap 堆上
+    留在Stack 栈上的只有指向 Heap堆数据的指针
+*/
+
+enum List {
+    Cons(i32, RC<List>), // 包含自身类型
+    Nil,
+}
+use std::rc::Rc;
+use crate::List::{Cons,Nil};
+
+fn main() {
+    // let a= Cons(5, Box::new(Cons(10, Box::new(Nil))));
+    // let b = Cons(3, Box::new(a)); // 所有权移动了
+    // let c = Cons(4, Box::new(a));
+
+    let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
+    println!("count after creating a = {}",Rc::strong_count(&a)); // 初始计数值1
+    let b = Cons(3, Rc::clone(&a)); // 
+    println!("count after creating b = {}",Rc::strong_count(&a)); //2
+    {
+        let c =  Cons(4, Rc::clone(&a)); 
+        println!("count after creating c = {}",Rc::strong_count(&a));//3
+    } // 出了作用域后 计数减少
+    println!("count after c goes out of scope = {}",Rc::strong_count(&a));//2
+}
