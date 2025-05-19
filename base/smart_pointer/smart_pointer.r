@@ -151,3 +151,88 @@ fn main() {
     } // 出了作用域后 计数减少
     println!("count after c goes out of scope = {}",Rc::strong_count(&a));//2
 }
+
+
+/*
+    RefCell<T> 和内部可变性模式
+
+    内部可变性模式
+    Interior mutability
+
+    对数据不可变引用时也可以修改数据
+    数据结构内部使用unsafe 代码绕过 Rust的规则
+    unsafe 代码: 手动检查规则，而不是依赖编译器
+    只有当能保证在运行时借用规则被遵守时,才能使用你不可变性模式的类型
+
+    在运行时通过RefCell<T> 强制执行借用规则
+
+    RefCell<T> 类型标识对其所持有数据的单一所有权
+
+    RefCell 只适合于单线程场景
+        用于多线程场景时，会给出编译时的错误
+
+*/
+
+
+// pub trait  Messenger {
+//     fn send(&self,msg:&str);
+
+// }
+
+// pub struct LimitTracker<'a,T:Messenger>{ // 实现了Messenger trait的泛型
+//     messenger: &'a T,
+//     value:usize,
+//     max:usize,
+// }
+
+// impl<'a,T> LimitTracker<'a,T>
+// where 
+//     T:Messenger,
+// {
+//     pub fn new(messenger:&'a T,max:usize) -> LimitTracker<'a,T>{
+//         LimitTracker { 
+//             messenger,
+//             value,
+//             max,
+//         }
+//     }
+
+//     pub fn set_value(&mut self, value:uszie){
+//         self.value= value;
+
+//         let percentage_of_max = self.value as f64 /self.max as f64;
+//         if percentage_of_max >= 1.0 {
+//             self.messenger.send("Error: You are over your quota!");
+//         }else if percentage_of_max >= 0.9 {
+//             self.messenger
+//                 .send("Urgent warning: You've used up over 90% of you quota!");
+//         }else if percentage_of_max >= 0.75 {
+//             self.messenger
+//                 .send("Warning: You've used up over 75% of you quota!");
+//         }
+        
+//     }
+// }
+
+mod tests{
+    use super::*;
+    use std::cell::RefCell;
+
+    impl MockMessenger{
+        fn new() -> MockMessenger {
+            MockMessenger {
+                sent_messages:RefCell::new(vec![]) // 建立RefCell 类型 vec
+            }
+        }
+    }
+
+    impl Messenger for MockMessenger {
+        fn send(&self,message:&str){
+            self.sent_messages.borrow_mut().push(String::from(message));// borrow_mut 可变引用
+        }
+    }
+}
+
+// borrow() -> Ref<T> 不可修改借用
+// borrow_mut() -> RefMut<T> 可修改借用
+// 只能借用一次
