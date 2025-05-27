@@ -178,3 +178,69 @@ fn main() {
     }
     println!("Result: {}",*counter.lock().unwrap());
 }
+
+/*
+    Sync & Send traits
+
+    Rust 大多数并发功能都是标准库的一部分，而不是语言本身
+    可以编写自己的并发功能或使用第三方库
+    个并发概念: std::marker traits  ---- Sync 和Send # 标记
+
+    Send trait
+
+    Send(marker trait) 所有权可以在线程之间转移
+    几乎所有Rust类型都是Send
+    但有一些例外,例如Rc<T> 不是Send
+        Rc<T>仅用于单线程情况
+    
+    Rust 的类型系统和trait约束确保不会意外地将非Send类型跨线程发送
+    完全有Send 类型组成的任何类型也自动标记为Send
+    几乎所有原始类型都是Send,原始指针除外
+
+
+    Sync(marker trait): 可以安全地从多个线程引用实现该trait的类型
+
+    如果&T 时Send,则类型T是Sync
+       即该引用可以安全的发送到另外一个线程
+
+    原始类型是Sync
+
+    完全由Sync类型做成的类型也是Sync
+*/
+
+use std::thread;
+
+const X: i32 = 42;
+
+fn main() {
+    let x_ref = &X; // 由于是i32 数字,赋值时copy
+    let ref_x_thread = x_ref;
+    let ref_x_main = x_ref;
+
+    println!("X ref: {x_ref}");
+    println!("ref_x_thread: {ref_x_thread}");
+    println!("ref_x_main: {x_rref_x_mainef}");
+
+    let t1 = thread::spawn(move || {
+        println!("In thread: {}",ref_x_thread); // &i32 --> Send 对i32的引用 是 Send
+    });
+    println!("Main thread: {}", ref_x_main);
+    
+    t1.join().unwrap();
+}
+
+/*
+    线程安全性与Sync
+    Sync 是Rust中最接近 "线程安全"的概念
+        "线程安全"指特定数据可以被多个并发线程安全使用
+
+    分开Send和Sync 特性(trait)的原因:一个类型可能是其中之一,两者都是，或者两者都不是
+        Rc<T>: 既不是Send 也不是Sync
+        RefCell<T>: 是Send(如果T是Send),但不是Sync // 代表数据的唯一所有权，但通过内部可变性模式允许在不可变引用下修改数据,支持运行时检查的可变借用(通过borrow_mut)，即使外部表现为不可变
+        Mutex<T>: 是Send 也是Sync,可用于多线程共享访问 // 互斥锁
+        MutexGuard<'a,T>: 是Sync(如果T是Sync)但不是Send //互斥锁.lock() 返回值(智能指针)LockResult<MutexGuard<T>> 
+
+    手动实现Send和Sync
+    手动实现涉及到实现unsafe Rust 代码
+    
+*/
