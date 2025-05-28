@@ -244,3 +244,107 @@ fn main() {
     手动实现涉及到实现unsafe Rust 代码
     
 */
+
+/*
+    异步编程
+    Asynchronous Programming
+
+    并行性 Parallelism:同时执行多个操作
+    并发性 Concurrency: 在操作间进行切换
+    阻塞操作 Blocking Operations:阻止程序继续执行直到操作完成
+    非阻塞操作 Non-blocking Operations:允许程序在等待时执行其他任务
+
+    操作类型
+    Type of Operations
+    CUP 密集型(CPU-boun):受处理器能力限制(如视频导出)
+    IO 密集型(IO-bound):受输入/输出速度限制(如文件下载)
+
+    并行与并发
+    Parallelism and Concurrency
+
+    并发性(Concurrency): 一个执行单元处理多个任务,通过任务切换实现
+    并行性(Parallelism): 多个执行单元同时处理不同任务
+    串行性(Serial Work): 任务按特定顺序一个接一个执行完成
+*/
+
+/*
+    Futures 和异步语法
+    Future and the Async Syntax
+
+    核心元素
+    Core Elements
+
+    Future(未来量): 一个可能现在还未准备好(就绪),但将来会准备好(就绪)的值
+        在其它语言中也称为 task或者 promise
+        在Rust中,Future 是实现了Future trait 的类型
+    
+    async 关键字:用于代码块或者函数,来表示可被中断和恢复
+        将函数或代码块转换为返回Future 的类型
+    await 关键字: 用于等待Future准备好(就绪)
+        提供暂停和恢复的点
+        轮询(polling)是检查Future值是否可用的过程
+
+    
+    Future 的特点
+    Future Characteristics
+
+    Rust 编译器将 async/await 代码转为使用 Fuure trait的等效代码
+        类似于for 循环被转换为使用Iterator trait
+    开发者可以自定义数据类型实现Future trait
+        提供统一接口但允许不同的异步操作实现
+    
+
+    trpl 整合了我们需要的类型、trait和函数，主要来自futures 和 tokio两个核心异步库
+
+    目标:专注于异步编程学习，避免生态系统干扰
+
+    工具: 使用trpl 库(The Rust Programming Language)
+        整合 futures 和tokio的核心功能
+        futures: 异步实验的官方家园，定义了Future特性
+        tokio: 最流行的异步运行式，广泛用于Web开发
+    设计:
+        trpl 重导出类型、函数和trait,简化学习
+        隐藏复杂细节，专注于异步核心
+*/
+
+use trpl::Html;
+
+fn main(){
+    let args: Vec<String> = std::env::args().collect();
+
+    // trpl::run( // main 中 启用async
+    //     async {
+    //         let url = &args[1];
+    //         match page_title(url).await {
+    //             Some(title) => println!("The title for {url} was {title}"),
+    //             None => println!("{url} had no title"),
+    //         }
+    //     } // async块 作用域
+    // ) // run 
+    trpl::run( async {
+        let title_fut_1 = page_title(&args[1]);
+        let title_fut_2 = page_title(&args[2]);
+
+        let (url,maybe_title) = 
+            match trpl::race(title_fut_1,title_fut_2).await { //trpl::race 竞争,获取最先完成得的
+                Either::Left(left) => left,// 看左右 Future 那个先完成
+                Either::Right(right) => right,
+            };
+
+        println!("{url} returned first");
+        match maybe_title {
+            Some(title) => println!("Its pag title is '{title}'"),
+            None => println!("Its title could not be parsed."),
+        }
+    })
+
+}
+
+async fn page_title(url:&str) -> Option<String> { //async 来表示可被中断和恢复 // impl Future 实现了Future trait
+    let response = trpl::get(url).await; // Future 等待,await执行
+    let response_text = reponse.text().await; // 获取返回文本内容 Future 等待,await执行
+    Html::parse(&response_text)// 函数所有权转移,使用引用&
+        .select_first("title") // 选择 第一个title元素
+        .map(|title_element| title_element.inner_html()); // map 获取 title 元素内容inner_html
+    (url,title)
+}
