@@ -348,3 +348,92 @@ async fn page_title(url:&str) -> Option<String> { //async 来表示可被中断�
         .map(|title_element| title_element.inner_html()); // map 获取 title 元素内容inner_html
     (url,title)
 }
+
+/*
+    使用 Async 实现并发
+    Applying Concurrency with Async
+
+
+*/
+
+use trpl
+// fn main() {
+//     trpl::run(
+//         async {
+//             let handle = trpl::spawn_task(async { // spawn_task 创建一个任务
+//                 for i in 1..10 {
+//                     println!("hi number {i} from the first task");
+//                     trpl::sleep(Duration::from_millis(500)).await; // 等待500毫秒-半秒
+//                 }
+                
+//             });
+            
+//             for i in 1..5 {
+//                     println!("hi number {i} from the second task");
+//                     trpl::sleep(Duration::from_millis(500)).await; // 等待500毫秒-半秒
+//             }
+//             handle.await.unwrap();
+//         }
+//     );
+// }
+
+// 同上
+fn main() {
+    trpl::run(
+        async {
+            let fut1 async { // spawn_task 创建一个任务
+                for i in 1..10 {
+                    println!("hi number {i} from the first task");
+                    trpl::sleep(Duration::from_millis(500)).await; // 等待500毫秒-半秒
+                }
+                
+            };
+            
+            let fut2 = async {
+                for i in 1..5 {
+                        println!("hi number {i} from the second task");
+                        trpl::sleep(Duration::from_millis(500)).await; // 等待500毫秒-半秒
+                }
+            };
+            trpl::join(fut1,fut2).await;
+        }
+    );
+}
+use std::time::Duration;
+fn main() {
+    trpl::run( // 整体阻塞 block_on 
+        async { // 不会阻塞
+            let (tx,mut rx) // tx发送端, rx接收端
+            = trpl::channel(); // 建立通道
+            // tx.clone() 发送端可以克隆
+
+            let vals = vec![
+                String::from("hi"),
+                String::from("from"),
+                String::from("the"),
+                String::from("future"),
+
+            ]
+            // let val = String::from("hi");
+            // tx.send(val).unwrap(); // unbound 
+            let tx_fut = async move { //使用move 转移到async作用域内,出了作用域，自动销毁，rx.recv()才能中断监听
+                for val in vals{
+                    tx.send(val).unwrap();
+                    trpl::sleep(Duration::from_millis(500)).await;
+                }
+            };
+
+            // let received = rx.recv().await.unwrap();
+            // println!("收到: {received}");
+
+            let rx_fut = async {
+                while let Some(value) = rx.recv().await { // rx.recv()一直监听,tx_fut 在作用域内销毁后，才会关闭channel;使用move 转移到async作用域内
+                    println!("received '{value}' ");
+                }
+            };
+            trpl::join(tx_fut,rx_fut).await;
+
+        }
+    );
+
+}
