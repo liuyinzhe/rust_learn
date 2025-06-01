@@ -307,7 +307,7 @@ fn main() {
         隐藏复杂细节，专注于异步核心
 */
 
-use trpl::Html;
+use trpl::{Html,Either};
 
 fn main(){
     let args: Vec<String> = std::env::args().collect();
@@ -340,10 +340,9 @@ fn main(){
 
 }
 
-async fn page_title(url:&str) -> Option<String> { //async 来表示可被中断和恢复 // impl Future 实现了Future trait
-    let response = trpl::get(url).await; // Future 等待,await执行
-    let response_text = reponse.text().await; // 获取返回文本内容 Future 等待,await执行
-    Html::parse(&response_text)// 函数所有权转移,使用引用&
+async fn page_title(url:&str) -> (&str,Option<String>) { //async 来表示可被中断和恢复 // impl Future 实现了Future trait
+    let response = trpl::get(url).await.text().await; // Future 等待,await执行// 获取返回文本内容 Future 等待,await执行
+    let title = Html::parse(&response) // 函数所有权转移,使用引用&
         .select_first("title") // 选择 第一个title元素
         .map(|title_element| title_element.inner_html()); // map 获取 title 元素内容inner_html
     (url,title)
@@ -380,8 +379,8 @@ use trpl
 // 同上
 fn main() {
     trpl::run(
-        async {
-            let fut1 async { // spawn_task 创建一个任务
+        async { // async 块内 两个任务实现并行
+            let fut1 = async { // spawn_task 创建一个任务
                 for i in 1..10 {
                     println!("hi number {i} from the first task");
                     trpl::sleep(Duration::from_millis(500)).await; // 等待500毫秒-半秒
@@ -413,7 +412,7 @@ fn main() {
                 String::from("the"),
                 String::from("future"),
 
-            ]
+            ];
             // let val = String::from("hi");
             // tx.send(val).unwrap(); // unbound 
             let tx_fut = async move { //使用move 转移到async作用域内,出了作用域，自动销毁，rx.recv()才能中断监听
@@ -431,6 +430,7 @@ fn main() {
                     println!("received '{value}' ");
                 }
             };
+            // 两个一起执行；输出只在rx_fut 中执行
             trpl::join(tx_fut,rx_fut).await;
 
         }
