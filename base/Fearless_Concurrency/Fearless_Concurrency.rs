@@ -404,7 +404,7 @@ fn main() {
         async { // 不会阻塞
             let (tx,mut rx) // tx发送端, rx接收端
             = trpl::channel(); // 建立通道
-            // tx.clone() 发送端可以克隆
+            // tx.clone(); 发送端可以克隆
 
             let vals = vec![
                 String::from("hi"),
@@ -437,3 +437,105 @@ fn main() {
     );
 
 }
+
+/*
+    处理任意数量的Future
+    Workingwith Any Number of Futures
+
+*/
+use std::pin::{pin,Pin};
+use std::time::Duration;
+fn main() {
+    trpl::run( // 整体阻塞 block_on 
+        async { // 不会阻塞
+            let (tx,mut rx) // tx发送端, rx接收端
+            = trpl::channel(); // 建立通道
+            let tx1 = tx.clone(); //发送端可以克隆
+            // pin!宏 包装async 块
+            let tx1_fut = pin!(async move {
+                let vals = vec![
+                    String::from("hi"),
+                    String::from("from"),
+                    String::from("the"),
+                    String::from("future"),
+                ];
+                for val in vals{
+                    tx1.send(val).unwrap();
+                    trpl::sleep(Duration::from_millis(500)).await;
+                }
+            });
+
+
+            // let val = String::from("hi");
+            // tx.send(val).unwrap(); // unbound 
+            // let tx_fut = async move { //使用move 转移到async作用域内,出了作用域，自动销毁，rx.recv()才能中断监听
+            //     for val in vals{
+            //         tx.send(val).unwrap();
+            //         trpl::sleep(Duration::from_millis(500)).await;
+            //     }
+            // };
+
+            // let received = rx.recv().await.unwrap();
+            // println!("收到: {received}");
+
+            
+
+            // 第二个发送端 // pin!宏 包装async 块
+            let tx_fut = pin!(async move {
+                let vals = vec![
+                    String::from("hi"),
+                    String::from("from"),
+                    String::from("the"),
+                    String::from("future"),
+                ];
+                for val in vals{
+                    tx.send(val).unwrap();
+                    trpl::sleep(Duration::from_millis(1500)).await;
+                }
+            });
+
+                        // 接收端 // pin!宏 包装async 块
+            let rx_fut = pin!(async move { // Future<Output = ()> async 块返回的类型
+                while let Some(value) = rx.recv().await { // rx.recv()一直监听,tx_fut 在作用域内销毁后，才会关闭channel;使用move 转移到async作用域内
+                    println!("received '{value}' ");
+                }
+            });
+
+            // Pin 包装类型 ,统一类型// dyn 动态
+            let futures: Vec<Pin<&mut dyn Future<Output=()>>>  = 
+                vec![tx1_fut,rx_fut,tx_fut];
+
+            // 两个一起执行；输出只在rx_fut 中执行
+            // trpl::join3(tx1_fut,tx_fut,rx_fut).await;
+            // 要求传入内容一致，用于动态数量的Future
+            trpl::join_all(futures).await;
+        }
+    );
+
+}
+
+
+
+// 不同返回值的
+use std::pin::{pin,Pin};
+use std::time::Duration;
+
+fn main() {
+    trpl::run( // block_on
+        async {
+            let a = async{1u32};
+            let b = async{ "Hello!" };
+            let c = async{ true };
+            
+            // join!() 允许内容类型不一致,用于处理固定数量的Future
+            let (a_result,b_result,c_rsult) = trpl::join!(a,b,c);
+            println!("{a_result},{b_result},{c_rsult}");
+
+        }
+    );
+}
+
+// 竞争的Futures
+// Racing Futures
+
+
