@@ -25,7 +25,7 @@
     thread::spawn 创建新线程
     thread::scope
 */
-use std::thread;
+use std::thread::{self, sleep};
 use std::time::Duration;
 fn main(){
     let handle = thread::spawn(||{ // 参数为闭包
@@ -538,4 +538,139 @@ fn main() {
 // 竞争的Futures
 // Racing Futures
 
+use std::thread;
+use std::time::Duration;
 
+
+fn main() {
+    trpl::run(
+        async {
+          let  a = async {
+            println!("'a' started");
+            // 阻塞步骤
+            slow("a", 130);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            slow("a", 10);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            slow("a", 120);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            //trpl::sleep(Duration::from_millis(100)).await; // 异步 sleep, await 线程切换位置, 异步控制权交给 异步运行时
+            println!("'a' finished");
+          };
+
+          let  b = async {
+            println!("'b' started");
+            
+            // 阻塞步骤
+            slow("b", 30);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            slow("b", 10);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            slow("b", 20);
+            trpl::yield_now().await; // 异步控制权交给 异步运行时 # 线程切换位置
+            //trpl::sleep(Duration::from_millis(50)).await; // 异步 sleep,  await 线程切换位置, 异步控制权交给 异步运行时
+            println!("'b' finished");
+          };
+
+          trpl::race(a,b).await; // trpl::race() 竞争运行 Racing Future // 任意执行完毕,程序直接停止
+          // 第一个参数式第一个执行
+
+        }
+    );
+}
+
+fn slow(name: &str,ms: u64) {
+    thread::sleep(Duration::from_millis(ms)); // 顺序执行阻塞 sleep
+    println!("'{name}' 运行了 {ms}ms");
+}
+
+// trpl::yield_now().await; // 最高效
+// 异步控制权交给 异步运行时 # 线程切换位置
+
+use std::thread;
+use std::time::{Duration,Instant};
+
+fn main() {
+    trpl::run(
+        async {
+            let one_ns = Duration::from_nanos(1);
+
+            let start = Instant::now(); // 当前时间
+            async {
+                for _ in 1..1000 {
+                    trpl::sleep(one_ns).await;
+                }
+            }.await;
+            // 输出用时
+            let time = Instant::now() - start;
+            println!(
+                "'sleep'版本在{}秒后完成。",
+                time.as_secs_f32()
+            );
+
+
+            let start = Instant::now(); // 当前时间
+
+            async {
+                for _ in 1..1000 {
+                    trpl::yield_now().await;
+                }
+
+            }.await;
+            // 输出用时
+            let time = Instant::now() - start;
+            println!(
+                "'yield'版本在{}秒后完成。",
+                time.as_secs_f32()
+            );
+
+        }
+    )
+}
+/*
+'sleep'版本在15.23684秒后完成。
+'yield'版本在0.0001741秒后完成。
+
+异步控制权交给 异步运行时 # 线程切换位置
+最好使用 trpl::yield_now().await; 速度快
+*/
+
+
+
+// 异步 函数
+use std::time::Duration;
+//use std::thread;
+use trpl::Either;
+fn main() {
+    trpl::run(
+        async {
+            let slow = async {
+                //thread::sleep(Duration::from_secs(5)); // 因为没有 await 切换, 没有进行超时比较，直接返回"I finished!"成功
+                trpl::sleep(Duration::from_secs(5)).await;
+                "I finished!"
+            };
+
+            match timeout(slow,Duration::from_secs(2)).await {
+                Ok(message) => println!("Succeeded with '{message}'"),
+                Err(duration) => {
+                    println!("Failed after {} seconds", duration.as_secs())
+                }
+            }
+        }
+    );
+}
+// 异步函数
+async fn timeout<F: Future>(
+    future_to_try:F,
+    max_time: Duration, // 形参 max_time 从未使用
+) -> Result<F::Output,Duration> { // Future::Output
+
+    // 竞争运行
+    match trpl::race(future_to_try,trpl::sleep(max_time)).await { // use trpl::{Html,Either};形参,未使用
+        Either::Left(output) => Ok(output),
+        Either::Right(_) => Err(max_time),
+
+    }
+}
+// Result:
+// Failed after 2 seconds
