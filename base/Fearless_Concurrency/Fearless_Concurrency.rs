@@ -100,7 +100,7 @@ fn main(){
     });
 
     
-    // let received = rx.recv().unwrap(); // recv 阻塞当前线程，直到接收到一个值
+    // let received = rx.recv().unwrap(); // recv 阻塞当前线程，直到接收到一个值 // recv 类似迭代器
     for received in rx {
         // try_recv 方法 不会阻塞，二十立即返回一个Result
         // 如果当前有消息可用，则返回Ok包含该内消息
@@ -674,3 +674,99 @@ async fn timeout<F: Future>(
 }
 // Result:
 // Failed after 2 seconds
+
+/*
+    Streams
+    Futures in Sequence
+    
+    Stream 就像异步版本的 iterator  recv() trpl::Receiver
+    可以从任何 iterator 来创建 Stream
+
+    StreamExt
+    Ext 是Rust社区中使用另外一个trait扩展某个trait的常见模式
+
+    Stream trait 定义了一个低级接口，有效地结合了Iterator 和Future traits
+    StreamExt 在Stream之上提供了一组更高级的API,包括next方法以及类似于Iterator trait 提供的其他使用方法
+
+    Stream 和 StreamExt 尚未称为Rust 标准库的一部分，但大多数生态系统中crate 使用相同的定义
+*/
+
+// StreamExt examle 1
+use trpl::StreamExt;
+fn main() {
+    trpl::run(
+        async {
+            let values:[i32;10] = [1,2,3,4,5,6,7,8,9,10];
+            let iter = values.iter().map(| n:&i32 | n*2 ); // iter() 列表转迭代器,使用map遍历转换数值内容
+            let mut stream = trpl::stream_from_iter(iter);
+
+            while let Some(value) = stream.next().await {
+                println!("The value was: {value}");
+            }
+        }
+    ); //初始化异步运行时
+
+}
+
+
+// StreamExt examle 2
+use trpl::StreamExt;
+fn main() {
+    trpl::run(
+        async {
+            let values = 1..101;
+            let iter = values.map(| n | n*2 ); 
+            let stream = trpl::stream_from_iter(iter);
+
+            let mut filtered = 
+                stream.filter(|value |value % 3 ==0|| value % 5 ==0); //3 或者 5 的倍数
+
+            while let Some(value) = filtered.next().await {
+                println!("The value was: {value}");
+            }
+        }
+    ); //初始化异步运行时
+
+}
+//
+
+/*
+    Composing Streams
+    组合流
+
+*/
+use std::{pin::pin,time::Duration};
+use trpl::{ReceiverStream,Stream,StreamExt};
+
+fn main() {
+    trpl::run( async {
+        let mut messages = 
+            pin!(get_messages().timeout(Duration::from_millis(200))); // 流添加超时，来自StreamExt
+            // pin! 固定后 Stream才能轮值(await)
+        while let Some(result) = messages.next().await {
+            match result {
+                Ok(message) => println!("{message}"),
+                Err(reason) => eprintln!("Problem {reason:?}"),
+            }
+            
+
+        }
+    });
+}
+
+fn get_messages() -> impl Stream<Item = String> {
+    let (tx,rx) = trpl::channel(); // 异步通信通道
+
+    trpl::spawn_task( async move {
+        let messages = ["a","b","c","d","e","f","g","h","i","j"];
+        for (index,message) in messages.into_iter().enumerate() {
+            let time_to_sleep = if index %2 == 0 { 100 }else{300};
+            trpl::sleep(Duration::from_millis(time_to_sleep)).await;
+
+            tx.send(format!("message: '{message}'")).unwrap();
+
+        }
+    });
+
+    ReceiverStream::new(rx) // 将异步通信接收器rx 转为具有next() 方法的流(Stream)
+}
