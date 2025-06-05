@@ -839,3 +839,14 @@ fn get_messages() -> impl Stream<Item = String> { // impl 实现了Stream trait 
         允许通过 next().await 消费数据
      */
 }
+
+/*
+特性	trpl::spawn_task	trpl::run
+执行方式	非阻塞	阻塞
+调用位置	可在异步代码内部调用	通常在 main 函数调用
+作用	创建新任务	启动整个运行时
+返回值	JoinHandle	程序退出码
+任务关系	子任务	根任务
+使用频率	可多次调用	每个程序调用一次
+线程行为	立即返回	阻塞当前线程
+* /
