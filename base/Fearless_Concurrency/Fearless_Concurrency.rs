@@ -770,3 +770,72 @@ fn get_messages() -> impl Stream<Item = String> {
 
     ReceiverStream::new(rx) // 将异步通信接收器rx 转为具有next() 方法的流(Stream)
 }
+
+
+// 合并流
+
+use std::{pin::pin,time::Duration};
+use trpl::{ReceiverStream,Stream,StreamExt};
+
+fn main() {
+    trpl::run( async { // 启动异步运行时
+        // 使用pin固定流在内存中的位置
+        let mut messages = pin!(get_messages().timeout(Duration::from_millis(200))); 
+        let intervals = get_intervals()
+            .map(|count| format!("Interval: {count}")) // 操作内容格式化字符串
+            .throttle(Duration::from_millis(100)) // 截留,限制调用的频率
+            .timeout(Duration::from_millis(10)); // 设置任务超时时间,全部是相同的timeout 类型
+        // 合并两个流任务，一起线程切换跑
+        let merged = messages.merge(intervals).take(20); // 合并相同的 timeout 类型 的流 // take(20) 限制从流中接收数据的数量，取20个停止 类似head 意思
+        let mut stream = pin!(merged); // ReceiverStream 流,允许通过 next().await 消费数据
+
+        while let Some(result) = stream.next().await {
+            match result {
+                Ok(message) => println!("{message}"),
+                Err(reason) => eprintln!("Problem {reason:?}"),
+            }
+        }
+    })
+}
+
+fn get_intervals() -> impl Stream<Item = u32> { // impl 实现了Stream 泛型返回值(返回泛型内容为u32 整数)
+    let (tx,rx) = trpl::channel(); // 异步通信通道
+
+    trpl::spawn_task( async move { //启动新的异步任务 // async move 块获取环境变量的所有权
+        let mut count = 0;
+        loop {
+            trpl::sleep(Duration::from_millis(1)).await;
+            count += 1;
+            if let Err(send_error) = tx.send(count){
+                eprintln!("Could not send Interval '{count}':{send_error}");
+                break;    
+            }
+        }
+    });
+
+    ReceiverStream::new(rx) // 将异步通信接收器rx 转为具有next() 方法的流(Stream)
+}
+
+fn get_messages() -> impl Stream<Item = String> { // impl 实现了Stream trait 泛型返回值(返回泛型内容为String)
+    let (tx,rx) = trpl::channel(); // 异步通信通道
+
+    trpl::spawn_task( async move {
+        let messages = ["a","b","c","d","e","f","g","h","i","j"];
+        for (index,message) in messages.into_iter().enumerate() {
+            let time_to_sleep = if index %2 == 0 { 100 }else{300};
+            trpl::sleep(Duration::from_millis(time_to_sleep)).await;
+
+            if let Err(send_error) = tx.send(format!("message: '{message}'")){
+                eprintln!("Cannot send message '{message}':{send_error}");
+                break;    
+            }
+        }
+    });
+
+    ReceiverStream::new(rx) // 将异步通信接收器rx 转为具有next() 方法的流(Stream)
+    /*
+        将通道接收端 rx 包装成 ReceiverStream
+        ReceiverStream 是实现了 Stream trait 的适配器
+        允许通过 next().await 消费数据
+     */
+}
