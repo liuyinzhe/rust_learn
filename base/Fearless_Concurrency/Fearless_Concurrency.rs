@@ -849,4 +849,82 @@ fn get_messages() -> impl Stream<Item = String> { // impl 实现了Stream trait 
 任务关系	子任务	根任务
 使用频率	可多次调用	每个程序调用一次
 线程行为	立即返回	阻塞当前线程
-* /
+*/
+
+
+
+/*
+    Traits for Async
+    异步主要的Traits
+
+*/
+
+// Future trait
+use std::pin::Pin;
+use std::task::{Context,Poll};
+
+// Future 轮询 Poll 状态
+pub trait Future {
+    type Output;
+    // Pin 内存中固定，因为有内部的自身引用，保证Future 可以放心引用
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output>;
+}
+
+enum Poll<T> {
+    Ready(T), // 准备就绪
+    Pending,  // 未就绪
+}
+
+// poll 使用 // Future 轮询 Poll 状态
+
+async fn page_title(url:&str) -> (&str,Option<String>) { //async 来表示可被中断和恢复 // impl Future 实现了Future trait
+    let response = trpl::get(url).await.text().await; // Future 等待,await执行// 获取返回文本内容 Future 等待,await执行 // await 后面调用poll 轮询
+    let title = Html::parse(&response) // 函数所有权转移,使用引用&
+        .select_first("title") // 选择 第一个title元素
+        .map(|title_element| title_element.inner_html()); // map 获取 title 元素内容inner_html
+    (url,title)
+}
+
+
+// Pin & Unpin
+// Pin 内存中固定，因为有内部的自身引用，保证Future 可以放心引用
+// 实现了 Unpin trait 的 future 时，也就实现了 Future
+/*
+    Pin 
+    Pin是 针对(类) 指针类型(如 & & mut Box和 Rc) 的包装器
+    它纯粹是编译器可以用来强制约束指针使用的工具 // 用于引用指针类型
+
+    与Rust中 大多数其他类型不同，Rust为异步块创建Future
+    可能最终在任何给定的变体的字段中 包含对自身的引用
+
+    Unpin & !Unpin
+    Unpin 是一个标记特性(mark trait), 它本身没有功能
+
+    Unpin 通知编辑器,给定类型不需要维持关于 "这个值是否可以安全移动" 的任何保证
+
+    就像Send 和Sync一样，编辑器会自动为所有可以证明安全的类型实现Unpin // 自由使用Pin
+
+    !Unpin
+
+    表示法 impl !Unpin for SomeType
+    当一个指向该类型的指针被包裹在Pin中使用时，这个SomeType 类型就必须维持这些保证(不被移动的保证)才能确保使用时的内存安全
+
+    Stream trait 
+    Iterator 序列，提供了next() 方法
+    Future 中，随时间就绪的概念
+        提供了 poll()放啊
+
+    Stream trait 就是同时可以拥有 next() poll() 方法
+*/
+
+use std::pin::Pin;
+use std::task::{Context,Poll};
+
+trait Stream {
+    type Item;
+
+    fn poll_next(
+        self:Pin<&mut Self>,
+        cx: &mut Context<'_>
+    ) -> Poll<Option<Self::Item>>;
+}
