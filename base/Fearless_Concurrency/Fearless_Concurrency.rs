@@ -928,3 +928,70 @@ trait Stream {
         cx: &mut Context<'_>
     ) -> Poll<Option<Self::Item>>;
 }
+
+
+
+// 使用异步任务trpl::spawn_task()构建Stream 
+// 任务是异步操作集合的边界;任务之间及任务内部都可并发运行；多个future 之间切换
+fn get_intervals() -> impl Stream<Item = u32> {
+    let (tx,rx) = trpl::channel();
+
+    trpl::spawn_task(async move{
+        let mut count = 0;
+        loop{
+            trpl::sleep(Duration::from_millis(1)).await;
+            count += 1;
+
+            if let Err(send_error) = tx.send(count) {
+                eprintln!("Could not send invterval {count}: {send_error}");
+                break;
+            };
+        }
+    });
+
+    ReceiverStream::new(rx)
+}
+// 使用线程thread来构建Stream // 上百万任务会消耗光
+// 线程是同步操作集合的边界;线程之间可以并发运行
+fn get_intervals() -> impl Stream<Item = u32> {
+    let (tx,rx) = trpl::channel();
+    // trpl::spawn_task(async move{
+    thread::spawn( move||{
+        let mut count = 0;
+        loop{
+            // trpl::sleep(Duration::from_millis(1)).await;
+            thread::sleep(Duration::from_millis(1));
+            count += 1;
+
+            if let Err(send_error) = tx.send(count) {
+                eprintln!("Could not send invterval {count}: {send_error}");
+                break;
+            };
+        }
+    });
+
+    ReceiverStream::new(rx)
+}
+
+// 运行时(executor) 负责管理任务,任务负责管理futures
+
+// 线程 与 异步 混合
+use std::{thread,time::Duration};
+
+fn main() {
+    let (tx,mut rx) = trpl::channel();
+
+    // 线程并行 send()
+    thread::spawn( move||{
+        for i in 1..11{
+            tx.send(i).unwrap();
+            thread::sleep(Duration::from_secs(1));
+        }
+    });
+    // 异步并发 rev() 接收
+    trpl::run(async {
+        while let Some(message) = rx.recv().await {
+            println!("{message}");
+        }
+    });
+}
