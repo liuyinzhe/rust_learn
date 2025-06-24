@@ -116,34 +116,75 @@ pub trait HelloMacro {
 // hello_macro_derive // 创建该名字的crate
 // Cargo.toml 内容
 [lib]
-proc-macro = true
+proc-macro = true // Rust 自带的, 编译器的API, 读取rust代码
 
 [dependencies]
-syn = "2.0"
-quote = "1.0"
+syn = "2.0" // 代码转换为抽象语法树(AST)
+quote = "1.0" // AST 转化为 代码
 // lib.rs
 use proc_macro::TokenStream;
-#[proc_macro_derive(HelloMacro)]
+#[proc_macro_derive(HelloMacro)] // 对应指定 #[derive(HelloMacro)]
 pub fn hello_macro_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree
     // that we can maniipulate
-    let ast = syn::parse(input).unwrap();
+    let ast = syn::parse(input).unwrap(); // 负责解析转化语法树
     
     // Build the trait implementation
-    impl_hello_macro(&ast)
+    impl_hello_macro(&ast) 
+}
+
+fn impl_hello_macro(ast: &syn::DeriveInput) -> TokenStream {
+    let name = &ast.ident;
+    let gen_tk = quote! { // 定义返回的Rust代码 // 模板机制 #name 对应name变量
+        impl HelloMacro for #name {
+            fn hello_macro() {
+                println!("Hello, Macro! My name is {}!", stringify!(#name)); // stringify 将表达式(如 1+2) 转为为字符串
+            }
+        }
+    };
+    gen_tk.into(); // 转为 TokenStream 类型
 }
 
 // main.rs
 use hello_macro::HelloMacro;
+use hello_macro_derive::HelloMacro;
 
+#[derive(HelloMacro)]
 struct Pancakes;
 
-impl HelloMacro for Pancakes {
-    fn hello_macro() {
-        println!(Hello, Macro! My name is Pancakes!);
-    }
-}
+// impl HelloMacro for Pancakes {
+//     fn hello_macro() {
+//         println!(Hello, Macro! My name is Pancakes!);
+//     }
+// }
 
 fn main() {
     Pancakes::hello_macro();
 }
+
+/*
+    属性宏 Attribute-like Macros
+
+    属性宏和自定义derive宏(custom derive macros) 类似
+    不同的是, 属性宏允许创建新的属性(attribute),这使得它更加灵活
+
+    #[route(GET),"/"]
+    fn index() {}
+
+    #[proc_macro_attribute]
+    pub fn route(attr:TokenStream, item: TokenStream) -> TokenStream {}
+
+    属性宏和自定义 derive 宏的核心机制一样: 你需要创建一个专门的宏
+    crate,然后写一个函数,接收 TokenStream, 生成你希望的代码
+
+
+    函数宏 Function-like Macros
+    函数宏看起来像是一个函数调用
+        let sql = sql!(SELECT * FROM posts WHERE id=1);
+    #[proc_macro]
+    pub fn sql(input: TokenStream) -> TokenStream {}
+
+    跟derive 宏很像, 函数宏也是接收一个TokenStream,生成代码返回
+    跟macro_rules!宏不同的是: macro_rules!使用的是匹配规则语法;
+    而函数宏使用的是Rust代码来处理TokenStream, 因此处理逻辑可以更复杂更灵活
+*/
