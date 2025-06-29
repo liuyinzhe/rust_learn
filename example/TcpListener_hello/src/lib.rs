@@ -61,7 +61,7 @@ impl ThreadPool {
 impl Drop for ThreadPool {
 
     fn drop(&mut self) {
-        drop(self.sender.take()); // 关闭发送端
+        drop(self.sender.take()); // 关闭发送端,receiver 也会对自动关闭
 
         /*
             drain(..) 是 Vec 的方法
