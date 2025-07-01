@@ -18,3 +18,7 @@ fn main() -> Result<(),Box<dyn Error>> {
         }
     }
 }
+
+
+// 发布
+// cargo build --release
