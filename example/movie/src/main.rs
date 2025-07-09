@@ -17,12 +17,12 @@ struct Cli {
 
 }
 
-#[derive(Subcommand)]
-enum Commands {
+#[derive(Subcommand)] // 子命令
+enum Commands { // 子命令-枚举
   /// User log into the system
   Login {
     /// The username of the user
-    #[arg(short,long)]
+    #[arg(short,long)] // 长短参数
     username: String
   },
   /// Log out
@@ -54,16 +54,16 @@ Options:
   -h, --help                 Print help
 */
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，兼容任意实现了 Error trait 的错误
     // let cli = Cli::parse();
     // println!("{}",cli.name);
     let cli = Cli::parse();
-    match &cli.commands{
+    match &cli.commands{  // Option match Some 内容或者 None
         Some(Commands::Login {username}) => handle_loging(username)?,
         Some(Commands::Logout) => handle_logout(),
         _ => println!("No command provider or command not recognized"),
       }
-      Ok(())
+      Ok(()) // 空返回
 }
 
 // cargo add clap -F derive
