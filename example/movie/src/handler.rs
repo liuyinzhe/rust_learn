@@ -14,7 +14,7 @@ pub fn handle_loging(username: &str) -> Result<(),Box<dyn Error>> {
         // }else{
         //     println!("Failed to read password");
         // }
-        match rpassword::read_password(){
+        match rpassword::read_password(){ // Option match 
             Ok(password) => {
                 if user.password == password {
                     // println!("Password: {password}");
