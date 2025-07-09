@@ -34,7 +34,7 @@ pub fn login_success(role: &Role) -> Result<(),Box<dyn Error>> {
 }
 
 pub fn get_logged_in_role() -> Result<Option<Role>,Box<dyn Error>> {
-    let role = fs::read_to_string(".session")?;
+    let role = fs::read_to_string(".session")?; 
     match role.as_str() {
         "Administrator" => Ok(Some(Role::Admin)),
         "User" => Ok(Some(Role::User)),
