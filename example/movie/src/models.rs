@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 pub struct User {
     pub username: String,
     pub password: String,
@@ -18,4 +20,15 @@ impl Display for Role {
             Role::User => write!(f, "User"),
         }
     }
+}
+
+// cargo add serde --features derive
+// cargo add serde_json
+// Default 定义解构体内容的默认值
+#[derive(Debug,Clone,Default,Serialize,Deserialize)]
+pub struct  Movie {
+    pub disc: usize,
+    pub year: String,
+    pub title: String,
+    pub remark: Option<String>
 }

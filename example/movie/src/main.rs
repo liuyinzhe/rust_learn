@@ -1,5 +1,5 @@
 use clap::{Parser,Subcommand};
-use movie::handler::{handle_loging,handle_logout};
+use movie::handler::{handle_loging,handle_logout,handle_list};
 
 #[derive(Parser)]
 #[command(
@@ -27,7 +27,8 @@ enum Commands { // 子命令-枚举
   },
   /// Log out
   Logout,
-    
+  /// list all the movies
+  List,
 }
 /*cargo run -- --help
 Movie infomation app
@@ -61,6 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，�
     match &cli.commands{  // Option match Some 内容或者 None
         Some(Commands::Login {username}) => handle_loging(username)?,
         Some(Commands::Logout) => handle_logout(),
+        Some(Commands::List) => handle_list()?, // Result
         _ => println!("No command provider or command not recognized"),
       }
       Ok(()) // 空返回

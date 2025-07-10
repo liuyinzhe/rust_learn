@@ -1,5 +1,5 @@
 use std::error::Error;
-use crate::services::{get_users, login_success,logout};
+use crate::services::{self, get_logged_in_role, get_users, login_success, logout};
 // cargo add rpassword
 pub fn handle_loging(username: &str) -> Result<(),Box<dyn Error>> {
     println!("username:{username}");
@@ -38,4 +38,20 @@ pub fn handle_loging(username: &str) -> Result<(),Box<dyn Error>> {
 pub fn handle_logout() {
     logout();
     println!("Logged out successfully.");
+}
+
+pub fn handle_list() -> Result<(),Box<dyn Error>>{
+    // 检查用户登录
+    match get_logged_in_role()? {
+        Some(_) => {
+            let movies = services::read_from_json()?;
+            println!("{movies:#?}");
+        }
+        None => {
+            println!("you need to log in to view the movies");
+        }
+
+    }
+    Ok(())
+
 }
