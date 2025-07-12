@@ -1,5 +1,5 @@
 use clap::{Parser,Subcommand};
-use movie::handler::{handle_loging,handle_logout,handle_list};
+use movie::handler::{handle_loging,handle_logout,handle_list,handle_add};
 
 #[derive(Parser)]
 #[command(
@@ -29,6 +29,24 @@ enum Commands { // 子命令-枚举
   Logout,
   /// list all the movies
   List,
+  /// Add a movie
+  Add {
+    /// The disc no. of the movie
+    #[arg(short,long)]
+    disc: usize,
+
+    /// The year when the movie was released
+    #[arg(short,long)]
+    year: String,
+
+    /// The title / file name of movie
+    #[arg(short,long)]
+    title: String,
+
+    // Optional remark of the movie
+    #[arg(short,long)]
+    remark: Option<String>
+  }
 }
 /*cargo run -- --help
 Movie infomation app
@@ -60,9 +78,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，�
     // println!("{}",cli.name);
     let cli = Cli::parse();
     match &cli.commands{  // Option match Some 内容或者 None
+        // cargo run -- login --username admin
         Some(Commands::Login {username}) => handle_loging(username)?,
         Some(Commands::Logout) => handle_logout(),
+        // cargo run -- list
         Some(Commands::List) => handle_list()?, // Result
+        // cargo run -- add --disc 150 --year 2025 --title "Some"
+        Some(Commands::Add { 
+          disc, 
+          year, 
+          title, 
+          remark }) => handle_add(*disc,year,title,remark)?, // 返回Result
         _ => println!("No command provider or command not recognized"),
       }
       Ok(()) // 空返回

@@ -1,4 +1,5 @@
 use std::error::Error;
+use crate::models::{Role,Movie};
 use crate::services::{self, get_logged_in_role, get_users, login_success, logout};
 // cargo add rpassword
 pub fn handle_loging(username: &str) -> Result<(),Box<dyn Error>> {
@@ -45,7 +46,8 @@ pub fn handle_list() -> Result<(),Box<dyn Error>>{
     match get_logged_in_role()? {
         Some(_) => {
             let movies = services::read_from_json()?;
-            println!("{movies:#?}");
+            services::list_movies(&movies);
+            //println!("{movies:#?}");
         }
         None => {
             println!("you need to log in to view the movies");
@@ -54,4 +56,27 @@ pub fn handle_list() -> Result<(),Box<dyn Error>>{
     }
     Ok(())
 
+}
+
+pub fn handle_add(disc: usize, year: &str, title: &str, remark: &Option<String>) -> Result<(),Box<dyn Error>> {
+    // 限制登陆用户角色
+    match get_logged_in_role()?{
+        Some(Role::Admin) => {
+            let mut movies = services::read_from_json()?;
+            let new_moive = Movie{
+                disc,
+                year: year.to_string(),
+                title: title.to_string(),
+                remark: remark.clone(),
+            };
+            movies.push(new_moive);
+            services::write_to_json(&movies)?;
+            println!("Movie added.");
+        }
+        _ => {
+            println!("You new to log in as Admin to add a movie");
+        }
+    }
+
+    Ok(())
 }
