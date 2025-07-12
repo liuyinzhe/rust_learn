@@ -88,6 +88,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，�
           disc, 
           year, 
           title, 
+          // handle_add(disc: usize, year: &str, title: &str, remark: &Option<String>)
+          // 由于 形参 disc 是实际数字, 实际参数disc 是一个引用指针,需要使用*解引用
           remark }) => handle_add(*disc,year,title,remark)?, // 返回Result
         _ => println!("No command provider or command not recognized"),
       }
