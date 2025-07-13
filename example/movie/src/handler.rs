@@ -52,7 +52,7 @@ pub fn handle_list() -> Result<(),Box<dyn Error>>{
         None => {
             println!("you need to log in to view the movies");
         }
-
+        
     }
     Ok(())
 
@@ -78,5 +78,29 @@ pub fn handle_add(disc: usize, year: &str, title: &str, remark: &Option<String>)
         }
     }
 
+    Ok(())
+}
+
+pub fn handle_delete(disc: &usize,index: &usize) -> Result<(),Box<dyn Error>> {
+    if let Some(Role::Admin) = get_logged_in_role()? {
+        let movies = services::read_from_json()?;
+        if let Some(movie) = movies
+            .iter()
+            .filter(|m|m.disc == *disc)
+            .enumerate()
+            .find(|(i,_)| i == index)
+            .map(|(_,m)|m.clone())
+        {
+            let left_movies = movies
+            .into_iter()
+            .filter(|m|*m != movie)
+            .collect::<Vec<Movie>>();
+            
+            services::write_to_json(&left_movies)?;
+            println!("Movie deleted.")
+        }
+    }else{
+        println!("You need to log in as admin to delete a movie.");
+    }
     Ok(())
 }

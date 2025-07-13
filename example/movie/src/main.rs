@@ -1,5 +1,5 @@
 use clap::{Parser,Subcommand};
-use movie::handler::{handle_loging,handle_logout,handle_list,handle_add};
+use movie::handler::{handle_loging,handle_logout,handle_list,handle_add,handle_delete};
 
 #[derive(Parser)]
 #[command(
@@ -46,6 +46,16 @@ enum Commands { // 子命令-枚举
     // Optional remark of the movie
     #[arg(short,long)]
     remark: Option<String>
+  },
+  /// Delete a movie
+  Delete {
+    /// The disc no. of the movie
+    #[arg(short,long)]
+    disc: usize,
+
+    /// The index of the movie in the disc
+    #[arg(short,long)]
+    index: usize
   }
 }
 /*cargo run -- --help
@@ -90,7 +100,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，�
           title, 
           // handle_add(disc: usize, year: &str, title: &str, remark: &Option<String>)
           // 由于 形参 disc 是实际数字, 实际参数disc 是一个引用指针,需要使用*解引用
-          remark }) => handle_add(*disc,year,title,remark)?, // 返回Result
+          remark 
+        }) => handle_add(*disc,year,title,remark)?, // 返回Result
+        // cargo run -- delete --disc 150 --index 0
+        Some(Commands::Delete { disc, index }) => handle_delete(disc,index)?,
         _ => println!("No command provider or command not recognized"),
       }
       Ok(()) // 空返回

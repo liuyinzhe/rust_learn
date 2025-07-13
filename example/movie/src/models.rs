@@ -32,3 +32,12 @@ pub struct  Movie {
     pub title: String,
     pub remark: Option<String>
 }
+
+impl PartialEq for Movie {
+    fn eq(&self,other:&Self) -> bool {
+        self.disc == other.disc
+            && self.year == other.year
+            && self.title == other.title
+            && self.remark == other.remark
+    }
+}
