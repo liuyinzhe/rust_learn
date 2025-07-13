@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::io::{self,Write};
 use crate::models::{Role,Movie};
 use crate::services::{self, get_logged_in_role, get_users, login_success, logout};
 // cargo add rpassword
@@ -52,7 +53,7 @@ pub fn handle_list() -> Result<(),Box<dyn Error>>{
         None => {
             println!("you need to log in to view the movies");
         }
-        
+
     }
     Ok(())
 
@@ -102,5 +103,73 @@ pub fn handle_delete(disc: &usize,index: &usize) -> Result<(),Box<dyn Error>> {
     }else{
         println!("You need to log in as admin to delete a movie.");
     }
+    Ok(())
+}
+
+
+pub fn handle_edit(disc:&usize, index: &usize) -> Result<(),Box<dyn Error>> {
+    if let Some(Role::Admin) = get_logged_in_role()? {
+        let mut movies = services::read_from_json()?;
+        if let Some(movie) = movies
+            .iter_mut()
+            .filter(|m|m.disc == *disc)
+            .enumerate()
+            .find(|(i,_)| i == index)
+            .map(|(_,m)|m)
+        {
+            print!("Enter the new disc no.:");// ,默认缓冲
+            io::stdout().flush()?; // use std::io::Write; // use std::io::{self,Write};
+            let mut disc = String::new();
+            io::stdin().read_line(&mut disc)?;
+            let disc = disc.trim();
+            if let Ok(disc)  = disc.parse::<usize>() {
+                movie.disc = disc;
+            }else{
+                println!("Invalid disc number.");
+                return  Ok(());
+            }
+
+            print!("Enter the year:");// ,默认缓冲
+            io::stdout().flush()?; // use std::io::Write; // use std::io::{self,Write};
+            let mut year = String::new();
+            io::stdin().read_line(&mut year)?;
+            let year = year.trim();
+            if year.parse::<usize>().ok().is_some() {
+                movie.year = year.to_string();
+            }else{
+                println!("Invalid year.");
+                return  Ok(());
+            }
+
+            print!("Enter the title:");// ,默认缓冲
+            io::stdout().flush()?; // use std::io::Write; // use std::io::{self,Write};
+            let mut title = String::new();
+            io::stdin().read_line(&mut title)?;
+            let title = title.trim();
+            if !title.is_empty() {
+                movie.title = title.to_string();
+            }else{
+                println!("Title cannot be empty.");
+                return  Ok(());
+            }
+
+            print!("Enter the remark (optional):");// ,默认缓冲
+            io::stdout().flush()?; // use std::io::Write; // use std::io::{self,Write};
+            let mut remark = String::new();
+            io::stdin().read_line(&mut remark)?;
+            let remark = remark.trim();
+            if remark.is_empty() {
+                movie.remark = None;
+            }else{
+                movie.remark = remark.to_string().into();// 实现From trait 的类性转换 // str 转换为 String
+            }
+
+            services::write_to_json(&movies)?;
+            println!("Movie modified.")
+        }
+    }else{
+        println!("You need to log in as admin to edit a movie.");
+    }
+
     Ok(())
 }

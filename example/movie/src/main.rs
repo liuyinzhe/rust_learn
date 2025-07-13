@@ -1,5 +1,5 @@
 use clap::{Parser,Subcommand};
-use movie::handler::{handle_loging,handle_logout,handle_list,handle_add,handle_delete};
+use movie::handler::{handle_loging,handle_logout,handle_list,handle_add,handle_delete,handle_edit};
 
 #[derive(Parser)]
 #[command(
@@ -56,6 +56,17 @@ enum Commands { // 子命令-枚举
     /// The index of the movie in the disc
     #[arg(short,long)]
     index: usize
+  },
+
+  /// Modify a movie
+  Edit {
+    /// The disc no. of the movie
+    #[arg(short,long)]
+    disc: usize,
+
+    /// The index of the movie in the disc
+    #[arg(short,long)]
+    index: usize
   }
 }
 /*cargo run -- --help
@@ -104,6 +115,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> { // 动态错误类型，�
         }) => handle_add(*disc,year,title,remark)?, // 返回Result
         // cargo run -- delete --disc 150 --index 0
         Some(Commands::Delete { disc, index }) => handle_delete(disc,index)?,
+        // cargo run -- edit --disc 122 --index 0 // 150 // 
+        Some(Commands::Edit { disc, index }) => handle_edit(disc,index)?,
         _ => println!("No command provider or command not recognized"),
       }
       Ok(()) // 空返回
@@ -140,3 +153,6 @@ Options:
   -h, --help     Print help (see more with '--help')
   -V, --version  Print version
 */
+
+
+// cargo build --release
