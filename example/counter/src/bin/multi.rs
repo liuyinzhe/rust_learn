@@ -19,41 +19,47 @@ fn main() -> Result<(),Box<dyn Error>> {
     }).collect();
 
     // cargo run --bin multi
-    let mut handles = vec![];
+    // Scoped threads 带作用域的线程
     // 分块
     const  CHUNK_SIZE: usize = 8 ;
     let chunks =files.chunks(CHUNK_SIZE);
-    for chunk in chunks{
-        let mut local_map = HashMap::new();
-        let chunk = chunk.to_vec(); // 切片转为vec，就可以move了
-        let handle = thread::spawn(move || {
-            chunk
-                .iter()
-                .filter_map(|p|fs::read_to_string(p).ok())
-                .for_each(|text|{
-                    text.split_whitespace().for_each(|w|{
-                        let word = w
-                            .trim_matches(|c:char|c.is_ascii_punctuation())
-                            .to_lowercase();
-                        if !word.is_empty() {
-                            // 解引用
-                            *local_map.entry(word).or_insert(0) += 1;
-                        }
+
+    thread::scope(|s|{ // &Scope 带作用域的线程,自动drop 线程
+        let mut handles = vec![];
+
+
+        for chunk in chunks{
+            let mut local_map = HashMap::new();
+            let handle = s.spawn( || {
+                chunk
+                    .iter()
+                    .filter_map(|p|fs::read_to_string(p).ok())
+                    .for_each(|text|{
+                        text.split_whitespace().for_each(|w|{
+                            let word = w
+                                .trim_matches(|c:char|c.is_ascii_punctuation())
+                                .to_lowercase();
+                            if !word.is_empty() {
+                                // 解引用
+                                *local_map.entry(word).or_insert(0) += 1;
+                            }
+
+                        });
 
                     });
-
-                });
-            local_map
-        });
-        handles.push(handle);
-    }
-
-    for h in handles {
-        let local_map= h.join().unwrap();
-        for (k,v) in local_map {
-            *map.entry(k).or_insert(0) += v;
+                local_map
+            });
+            handles.push(handle);
         }
-    }
+
+        for h in handles {
+            let local_map= h.join().unwrap();
+            for (k,v) in local_map {
+                *map.entry(k).or_insert(0) += v;
+            }
+        }
+    });
+
 
     println!("Map count: {}",map.len());
     let mut vec: Vec<_> = map.iter().collect();
