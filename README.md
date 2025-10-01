@@ -16,6 +16,7 @@ rustc --version  # 查看 rustc 版本
 
 
 cargo test function
+cargo test --test cli runs // src/tests/cli.rs  // runs()
 
 cargo run -- --name=Alice -v  # 参数
 cargo run -- arg1 arg2 arg3
