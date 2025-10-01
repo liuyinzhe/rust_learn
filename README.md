@@ -5,7 +5,10 @@
 ```bash
 cargo new project
 
+#[dependencies]
 cargo add clap
+#[dev-dependencies]
+cargo add --dev assert_cmd predicates
 
 rustup update stable    # 更新 rust 工具链
 cargo --version  # 查看 cargo 版本
