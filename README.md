@@ -9,6 +9,7 @@ cargo new project
 cargo add clap
 #[dev-dependencies]
 cargo add --dev assert_cmd predicates
+cargo add  clap --features derive
 
 rustup update stable    # 更新 rust 工具链
 cargo --version  # 查看 cargo 版本
