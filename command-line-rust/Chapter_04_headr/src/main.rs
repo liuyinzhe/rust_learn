@@ -83,7 +83,7 @@ fn run(args: Args) -> Result<()> {
 
                         最后,清空字符串 line,为下一行读取做准备。
                     */
-                    let mut buffer = vec![0; num_bytes as usize]; // 使用 vec! 宏创建向量 // vec![向量的初始值; 向量的长度]
+                    let mut buffer = vec![0; num_bytes as usize]; // as 字符串转为 usize // 使用 vec! 宏创建向量 // vec![向量的初始值; 向量的长度]
                     /*
                     // 假设 buffer = [0, 0, 0, 0, 0] (5个字节)
                     // 假设 bytes_read = 3 (实际只读取了3个字节)
