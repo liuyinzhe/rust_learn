@@ -47,8 +47,8 @@ registry = "https://rsproxy.cn/crates.io-index"
 [source.ustc]
 registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
 
-[source.tuna]
-registry = "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"
+[registries.ustc]
+index = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
 
 [net]
 git-fetch-with-cli = true  # 避免部分环境下 libgit2 超时
