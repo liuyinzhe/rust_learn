@@ -27,7 +27,7 @@ cargo run --quiet --bin true # src/bin/true.rs
 cargo run hello # 运行主程序
 ```
 
-# 国内镜像/源头
+# 国内镜像/源
 >.bashrc
 ```bash
 export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
