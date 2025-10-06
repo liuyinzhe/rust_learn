@@ -26,3 +26,33 @@ cargo run --quiet --bin true # src/bin/true.rs
 #Cargo.toml 中 name = "hello"
 cargo run hello # 运行主程序
 ```
+
+# 国内镜像/源头
+>.bashrc
+```bash
+export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
+export RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
+```
+>$HOME/.cargo/config.toml
+```
+[source.crates-io]
+replace-with = 'ustc'
+ 
+[source.ustc]
+registry = "https://mirrors.ustc.edu.cn/crates.io-index"
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[source.rsproxy]
+registry = "https://rsproxy.cn/crates.io-index"
+
+[source.ustc]
+registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
+
+[source.tuna]
+registry = "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"
+
+[net]
+git-fetch-with-cli = true  # 避免部分环境下 libgit2 超时
+```
