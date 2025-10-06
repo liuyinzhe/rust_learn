@@ -37,9 +37,6 @@ export RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
 ```
 [source.crates-io]
 replace-with = 'ustc'
- 
-[source.ustc]
-registry = "https://mirrors.ustc.edu.cn/crates.io-index"
 
 [source.rsproxy-sparse]
 registry = "sparse+https://rsproxy.cn/index/"
