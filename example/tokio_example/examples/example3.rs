@@ -27,7 +27,7 @@
 // join!  // 等待多个任务完成, 并返回结果
 // yield_now // 暂停当前任务, 并切换到其他任务
 
-use tokio::task::JoinSet;
+// use tokio::task::JoinSet;
 
 // cargo run --example example3
 // use tokio::time::Duration;
@@ -47,7 +47,7 @@ async fn _run(){
     }
 }
 
-async fn add(a: i32,b: i32) -> i32 {
+async fn _add(a: i32,b: i32) -> i32 {
     println!("{}", a + b);
     a + b
 }

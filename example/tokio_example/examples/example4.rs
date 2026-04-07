@@ -5,7 +5,7 @@
 */
 
 
-use std::{thread, time::Duration};
+use std::time::Duration;
 
 // cargo run --example example4
 
