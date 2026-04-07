@@ -24,6 +24,10 @@ async fn main() {
     let (tx, _) = broadcast::channel(10); // 自动推理类型
 
     // 创建 取消令牌
+    /*
+    所有克隆出来的令牌（包括 token、cancel_token、以及每个客户端任务持有的 token）都共享同一个内部状态。
+    只要任意一个令牌调用了 .cancel()，所有令牌的 .cancelled() future 都会立即完成。
+    */
     let token = CancellationToken::new();
     let cancel_token = token.clone(); // 克隆一个取消令牌,用于在异步任务中使用
 
