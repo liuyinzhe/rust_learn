@@ -15,8 +15,11 @@ rustup update stable    # 更新 rust 工具链
 cargo --version  # 查看 cargo 版本
 rustc --version  # 查看 rustc 版本
 
-
-cargo test function
+cargo test  // 测试所有代码中的#[cfg(test)]
+cargo test --bin <name> // 只运行指定二进制文件的测试, bin 目录
+cargo test <pattern> // 运行名称匹配模式的测试函数（支持模糊匹配）
+cargo test function // function为测试#[cfg(test)]作用域内的函数名
+cargo test --test <filename> // 测试tests 目录下的文件
 cargo test --test cli runs // src/tests/cli.rs  // runs()
 
 cargo run -- --name=Alice -v  # 参数
