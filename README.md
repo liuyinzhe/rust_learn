@@ -17,6 +17,7 @@ rustc --version  # 查看 rustc 版本
 
 cargo test  // 测试所有代码中的#[cfg(test)]
 cargo test --bin <name> // 只运行指定二进制文件的测试, bin 目录
+cargo test --lib // 只运行 src/lib.rs 中的单元测试
 cargo test <pattern> // 运行名称匹配模式的测试函数（支持模糊匹配）
 cargo test function // function为测试#[cfg(test)]作用域内的函数名
 cargo test --test <filename> // 测试tests 目录下的文件
