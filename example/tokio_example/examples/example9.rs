@@ -1,9 +1,14 @@
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::TcpListener, signal, sync::broadcast // 广播,用于任务之间通信
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, 
+    net::TcpListener, 
+    signal, 
+    sync::{broadcast, Semaphore}// broadcast广播,用于任务之间通信 // Semaphore信号量,用于限制并发任务数量
 };
 use tokio_util::sync::CancellationToken;
 use tokio::task::JoinSet;   // 管理多个任务
+use std::sync::Arc;
 
+// cargo add tokio -F full
 // cargo add tokio-util
 // cargo add tracing
 // cargo add tracing-subscriber
@@ -24,7 +29,8 @@ async fn main() {
     // 建立广播 // 多生产者 - 多消费者
     // tx 是发送端,可以克隆多个发送端,每个发送端都可以发送消息
     // rx 是接收端,可以订阅多个接收端,每个接收端都可以接收发送端发送的消息
-    let (tx, _) = broadcast::channel(10);
+    // 10 内部缓冲区大小, 每个接收端最多能暂存多少条未消费的消息
+    let (tx, _) = broadcast::channel(10); 
 
     // 创建 取消令牌
     /*
@@ -48,6 +54,10 @@ async fn main() {
     // 2. 创建一个任务集，用于管理所有客户端任务
     let mut join_set = JoinSet::new();
 
+    // 创建信号量，限制最大并发连接数为 5（可按需调整）
+    let max_connections = 5; // 限制同时运行的 handle_client 任务数量
+    let semaphore = Arc::new(Semaphore::new(max_connections));
+
     // 3. 主循环：同时等待 accept 和取消信号
     let main_token = token.clone();
     // // 无限循环回显客户端消息
@@ -59,9 +69,15 @@ async fn main() {
                         let token = token.clone(); // 克隆取消令牌,取消令牌之间关联;结构体内容是Arc指针
                         let tx = tx.clone();
                         let rx = tx.subscribe(); // 订阅广播通道,每个客户端任务都有自己的接收端
+                        
+                        let semaphore_clone = semaphore.clone();
+
+                        // 先获取许可（异步等待直到有可用连接槽位）
+                        let permit = semaphore_clone.acquire_owned().await.unwrap();
+
                         // 将任务句柄加入 JoinSet
                         join_set.spawn(async move {
-                            handle_client(socket, address, token, tx, rx).await;
+                            handle_client(socket, address, token, tx, rx, permit).await;
                         });
                     }
                     Err(e) => {
@@ -98,6 +114,7 @@ async fn handle_client(
     token: CancellationToken,
     tx: broadcast::Sender<(String, std::net::SocketAddr)>,
     mut rx: broadcast::Receiver<(String, std::net::SocketAddr)>,
+    _permit: tokio::sync::OwnedSemaphorePermit, // 持有许可直到任务结束
 ) {
     // 将 TcpStream 拆分为一个只读句柄和一个只写句柄
     let (stream_reader, mut stream_writer) = socket.split();
