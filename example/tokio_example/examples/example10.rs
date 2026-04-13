@@ -53,7 +53,7 @@ fn connect_and_validate(address: &str) -> Result<TcpStream, std::io::Error> {
     let stream = TcpStream::connect(address)?;
     Ok(stream)
 }
-
+#[allow(dead_code)]
 fn parse_address(content: &str) -> Result<(String, u16), ParseIntError> {
     let parts:Vec<&str> = content.split(":").collect();
     let host = parts[0].to_string();
@@ -63,7 +63,7 @@ fn parse_address(content: &str) -> Result<(String, u16), ParseIntError> {
 // type GenericResult<T> = Result<T, Box<dyn std::error::Error>>;
 // fn load_config_and_connect() -> Result<TcpStream, Box<dyn std::error::Error>> {
 // fn load_config_and_connect() -> GenericResult<TcpStream> {
-fn load_config_and_connect() -> anyhow::Result<TcpStream> { // anyhow box 包装器
+fn _load_config_and_connect() -> anyhow::Result<TcpStream> { // anyhow box 包装器
     let config_file = Path::new("server.txt");
     let raw_text = fs::read_to_string(config_file)?;
     let (host, port) = parse_address(raw_text.trim())?;
@@ -74,7 +74,7 @@ fn load_config_and_connect() -> anyhow::Result<TcpStream> { // anyhow box 包装
 }
 
 
-fn anyhow_load_config_and_connect() -> anyhow::Result<TcpStream> {
+fn _anyhow_load_config_and_connect() -> anyhow::Result<TcpStream> {
     let config  = Path::new("server.txt");
     let raw_text = fs::read_to_string(config)?;
     let address = raw_text.trim();
